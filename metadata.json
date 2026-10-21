@@ -1,0 +1,6 @@
+{
+  "name": "Simulador de Pulling",
+  "description": "Simulador estocástico para analizar la capacidad de equipos de pulling en pozos usando la teoría de colas y Monte Carlo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
