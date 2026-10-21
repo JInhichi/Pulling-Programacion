@@ -404,7 +404,13 @@ export default function Simulator() {
 
   // Handlers de cambios
   const handleGlobalChange = (key: keyof typeof globalParams, val: number) => {
-    setGlobalParams(prev => ({ ...prev, [key]: Math.max(0.1, val) }));
+    if (key === 'initialBacklog') {
+      setGlobalParams(prev => ({ ...prev, initialBacklog: Math.max(1, Math.min(100, Math.round(val))) }));
+    } else if (key === 'serviceRateDays') {
+      setGlobalParams(prev => ({ ...prev, serviceRateDays: Math.max(0.5, Math.min(5.0, val)) }));
+    } else {
+      setGlobalParams(prev => ({ ...prev, [key]: Math.max(0.1, val) }));
+    }
   };
 
   const handleScenarioChange = (index: number, field: 'arrivalRate' | 'numEquipments', val: number) => {
@@ -603,36 +609,83 @@ export default function Simulator() {
               {/* Backlog Inicial */}
               <div>
                 <div className="flex justify-between items-center text-xs mb-1.5">
-                  <label className="text-slate-800 font-semibold">Pozos Iniciales en Cartera</label>
-                  <span className="text-slate-950 font-bold tabular-nums bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200">
-                    {globalParams.initialBacklog} pozos
-                  </span>
+                  <label htmlFor="input-initial-backlog" className="text-slate-800 font-semibold cursor-pointer">
+                    Pozos Iniciales en Cartera
+                  </label>
+                  <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-md border border-slate-300 shadow-sm focus-within:border-[#1877F2] focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                    <input
+                      id="input-initial-backlog"
+                      type="number"
+                      min="1"
+                      max="100"
+                      step="1"
+                      value={globalParams.initialBacklog}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) {
+                          handleGlobalChange('initialBacklog', Math.max(1, Math.min(100, val)));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        let val = parseInt(e.target.value, 10);
+                        if (isNaN(val) || val < 1) val = 1;
+                        if (val > 100) val = 100;
+                        handleGlobalChange('initialBacklog', val);
+                      }}
+                      className="w-12 text-right text-slate-950 font-black tabular-nums outline-none text-xs bg-transparent"
+                      aria-label="Pozos iniciales en cartera (1 a 100)"
+                    />
+                    <span className="text-[11px] font-bold text-slate-500 select-none">pozos</span>
+                  </div>
                 </div>
                 <input
                   type="range"
-                  min="10"
-                  max="300"
-                  step="5"
+                  min="1"
+                  max="100"
+                  step="1"
                   value={globalParams.initialBacklog}
                   onChange={(e) => handleGlobalChange('initialBacklog', parseInt(e.target.value, 10))}
                   className="w-full accent-[#1877F2] bg-slate-200 h-1.5 rounded-lg cursor-pointer"
+                  aria-label="Control deslizante de pozos iniciales"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
-                  <span>10 pozos</span>
-                  <span>300 pozos</span>
+                  <span>1 pozo</span>
+                  <span>100 pozos</span>
                 </div>
               </div>
 
               {/* Tiempo Medio de Servicio (Días/Pozo) */}
               <div>
                 <div className="flex justify-between items-center text-xs mb-1.5">
-                  <label className="text-slate-800 font-semibold flex items-center gap-1.5">
+                  <label htmlFor="input-service-rate" className="text-slate-800 font-semibold flex items-center gap-1.5 cursor-pointer">
                     <Clock className="w-3.5 h-3.5 text-slate-500" />
                     <span>Días por Pozo (1/μ)</span>
                   </label>
-                  <span className="text-slate-950 font-bold tabular-nums bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200">
-                    {globalParams.serviceRateDays} días / pozo
-                  </span>
+                  <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-md border border-slate-300 shadow-sm focus-within:border-slate-800 focus-within:ring-2 focus-within:ring-slate-100 transition-all">
+                    <input
+                      id="input-service-rate"
+                      type="number"
+                      min="0.5"
+                      max="5.0"
+                      step="0.1"
+                      value={globalParams.serviceRateDays}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) {
+                          handleGlobalChange('serviceRateDays', Math.max(0.5, Math.min(5.0, Number(val.toFixed(1)))));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        let val = parseFloat(e.target.value);
+                        if (isNaN(val) || val < 0.5) val = 0.5;
+                        if (val > 5.0) val = 5.0;
+                        handleGlobalChange('serviceRateDays', Number(val.toFixed(1)));
+                      }}
+                      className="w-12 text-right text-slate-950 font-black tabular-nums outline-none text-xs bg-transparent"
+                      aria-label="Días por pozo (0.5 a 5.0)"
+                    />
+                    <span className="text-[11px] font-bold text-slate-500 select-none">días/pozo</span>
+                  </div>
                 </div>
                 <input
                   type="range"
@@ -642,6 +695,7 @@ export default function Simulator() {
                   value={globalParams.serviceRateDays}
                   onChange={(e) => handleGlobalChange('serviceRateDays', parseFloat(e.target.value))}
                   className="w-full accent-slate-800 bg-slate-200 h-1.5 rounded-lg cursor-pointer"
+                  aria-label="Control deslizante de días por pozo"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-medium">
                   <span>0.5 días (Rápido)</span>
@@ -723,39 +777,97 @@ export default function Simulator() {
                   {/* Controles de Entrada */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2 pl-1.5">
                     {/* Pozos que ingresan a pulling por día */}
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
-                      <label className="text-[11px] text-slate-700 font-bold flex items-start gap-1 mb-1.5 leading-snug">
-                        Pozos que ingresan a pulling por día
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          step="0.1"
-                          min="0.1"
-                          max="15"
-                          value={sc.arrivalRate}
-                          onChange={(e) => handleScenarioChange(idx, 'arrivalRate', parseFloat(e.target.value))}
-                          className="w-full bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-950 text-base font-black outline-none focus:border-[#1877F2] transition-colors tabular-nums"
-                        />
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                      <div className="flex items-center justify-between gap-1 mb-1.5 leading-snug">
+                        <label className="text-[11px] text-slate-700 font-bold">
+                          Pozos ingresan/día
+                        </label>
+                        <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-300 shadow-sm focus-within:border-[#1877F2] transition-colors">
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0.1"
+                            max="15"
+                            value={sc.arrivalRate}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val)) {
+                                handleScenarioChange(idx, 'arrivalRate', Math.max(0.1, Math.min(15, val)));
+                              }
+                            }}
+                            onBlur={(e) => {
+                              let val = parseFloat(e.target.value);
+                              if (isNaN(val) || val < 0.1) val = 0.1;
+                              if (val > 15) val = 15;
+                              handleScenarioChange(idx, 'arrivalRate', Number(val.toFixed(1)));
+                            }}
+                            className="w-12 text-right text-slate-950 text-xs font-black outline-none tabular-nums bg-transparent"
+                            aria-label={`Pozos diarios escenario ${idx + 1}`}
+                          />
+                          <span className="text-[10px] text-slate-500 font-medium select-none">p/d</span>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.1"
+                        max="15"
+                        step="0.1"
+                        value={sc.arrivalRate}
+                        onChange={(e) => handleScenarioChange(idx, 'arrivalRate', parseFloat(e.target.value))}
+                        className="w-full accent-[#1877F2] bg-slate-200 h-1 rounded-lg cursor-pointer mt-1"
+                        aria-label={`Control deslizante pozos diarios escenario ${idx + 1}`}
+                      />
+                      <div className="flex justify-between text-[9px] text-slate-400 mt-1 font-medium">
+                        <span>0.1</span>
+                        <span>15.0</span>
                       </div>
                     </div>
 
                     {/* Equipos disponibles */}
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col justify-between">
-                      <label className="text-[11px] text-slate-700 font-bold flex items-center gap-1.5 mb-1.5 leading-snug">
-                        <Wrench className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span>Equipos disponibles</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          step="1"
-                          min="1"
-                          max="25"
-                          value={sc.numEquipments}
-                          onChange={(e) => handleScenarioChange(idx, 'numEquipments', parseInt(e.target.value, 10))}
-                          className="w-full bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-950 text-base font-black outline-none focus:border-[#1877F2] transition-colors tabular-nums"
-                        />
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                      <div className="flex items-center justify-between gap-1 mb-1.5 leading-snug">
+                        <label className="text-[11px] text-slate-700 font-bold flex items-center gap-1">
+                          <Wrench className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span>Equipos</span>
+                        </label>
+                        <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-300 shadow-sm focus-within:border-slate-800 transition-colors">
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            max="25"
+                            value={sc.numEquipments}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val)) {
+                                handleScenarioChange(idx, 'numEquipments', Math.max(1, Math.min(25, val)));
+                              }
+                            }}
+                            onBlur={(e) => {
+                              let val = parseInt(e.target.value, 10);
+                              if (isNaN(val) || val < 1) val = 1;
+                              if (val > 25) val = 25;
+                              handleScenarioChange(idx, 'numEquipments', val);
+                            }}
+                            className="w-10 text-right text-slate-950 text-xs font-black outline-none tabular-nums bg-transparent"
+                            aria-label={`Equipos disponibles escenario ${idx + 1}`}
+                          />
+                          <span className="text-[10px] text-slate-500 font-medium select-none">eq</span>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="25"
+                        step="1"
+                        value={sc.numEquipments}
+                        onChange={(e) => handleScenarioChange(idx, 'numEquipments', parseInt(e.target.value, 10))}
+                        className="w-full accent-slate-800 bg-slate-200 h-1 rounded-lg cursor-pointer mt-1"
+                        aria-label={`Control deslizante equipos disponibles escenario ${idx + 1}`}
+                      />
+                      <div className="flex justify-between text-[9px] text-slate-400 mt-1 font-medium">
+                        <span>1</span>
+                        <span>25</span>
                       </div>
                     </div>
                   </div>

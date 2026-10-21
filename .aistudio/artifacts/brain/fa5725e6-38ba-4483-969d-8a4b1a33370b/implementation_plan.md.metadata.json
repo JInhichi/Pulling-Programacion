@@ -1,6 +1,6 @@
 {
-  "summary":  "Plan de implementación para habilitar la activación/desactivación dinámica de cada escenario mediante chips interactivos en la cabecera del gráfico, atenuación visual de tarjetas comparativas, filtrado en el tooltip y actualización estricta del subtítulo a 'Análisis estocástico'.",
-  "updatedAt":  "2026-10-21T15:46:23.777577841Z",
+  "summary":  "Plan de implementación para habilitar la entrada numérica manual y sincronizada con slider para los pozos iniciales en cartera (rango 1 a 100 pozos) y para todos los parámetros de entrada del simulador (tiempo de servicio y parámetros por escenario).",
+  "updatedAt":  "2026-10-21T16:07:06.784503417Z",
   "requestFeedback":  true,
   "userFacing":  true
 }
